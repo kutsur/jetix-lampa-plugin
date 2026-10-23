@@ -1,0 +1,25 @@
+[Unit]
+Description=Jetix
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jetix
+Group=jetix
+WorkingDirectory=/opt/jetix
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=/opt/jetix/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=XDG_CACHE_HOME=/opt/jetix/.cache
+ExecStart=/opt/jetix/.venv/bin/python /opt/jetix/server/app.py
+Restart=always
+RestartSec=5
+RestartPreventExitStatus=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/jetix
+
+[Install]
+WantedBy=multi-user.target

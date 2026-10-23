@@ -1,0 +1,17 @@
+# секреты
+.env
+cookies.txt
+*.cookies
+*.cookies.txt
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# прочее
+.DS_Store
+.idea/
+.vscode/
+node_modules/
