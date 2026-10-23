@@ -1,0 +1,8 @@
+[Unit]
+Description=Update yt-dlp for Jetix
+
+[Service]
+Type=oneshot
+User=jetix
+Group=jetix
+ExecStart=/opt/jetix/.venv/bin/pip install --quiet --upgrade yt-dlp
