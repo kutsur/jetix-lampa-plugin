@@ -53,6 +53,7 @@ sudo ./deploy/install.sh https://ваш-домен
 | `SECRET` | секретная часть пути, генерируется при установке |
 | `PUBLIC_URL` | `https://ваш-домен`, без слеша в конце |
 | `PROXY_MODE` | `off`, `manifest` или `full` (см. «Если не играет») |
+| `VERIFY_MEDIA` | `1` — проверять ссылку на CDN и при отказе пробовать следующий способ |
 | `CHANNEL_NAME` | название канала в M3U |
 | `VK_VIDEOS_URL` | режим без токена: `https://vk.com/video/@club<ID>`, нужны cookies |
 

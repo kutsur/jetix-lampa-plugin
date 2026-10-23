@@ -49,6 +49,7 @@ PORT = _int("PORT", 18731)
 SECRET = os.environ.get("SECRET", "").strip().strip("/")
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "").strip().rstrip("/")
 PROXY_MODE = os.environ.get("PROXY_MODE", "off").strip().lower()
+VERIFY_MEDIA = _bool("VERIFY_MEDIA", True)
 
 CHANNEL_NAME = os.environ.get("CHANNEL_NAME", "Jetix").strip()
 

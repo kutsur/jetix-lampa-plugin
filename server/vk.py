@@ -8,6 +8,7 @@ import urllib.parse
 import urllib.request
 
 import config
+import proxy
 
 log = logging.getLogger("jetix.vk")
 
@@ -244,18 +245,32 @@ def find_streams():
 
 
 def _from_files(files):
-    for key in ("hls_live", "hls_live_playback", "hls", "hls_ondemand"):
+    out = []
+    order = ["hls_live", "hls", "hls_ondemand"]
+    order += sorted(k for k in files if k.startswith("hls") and k not in order and k != "hls_live_playback")
+    order.append("hls_live_playback")
+    for key in order:
         url = files.get(key)
         if isinstance(url, str) and url.startswith("http"):
-            return {"type": "hls", "url": url, "headers": {}, "method": "api:files." + key}
-    for key, url in files.items():
-        if key.startswith("hls") and isinstance(url, str) and url.startswith("http"):
-            return {"type": "hls", "url": url, "headers": {}, "method": "api:files." + key}
+            out.append({"type": "hls", "url": url, "headers": {}, "method": "api:files." + key})
     for q in ("1080", "720", "1440", "2160", "480", "360"):
         url = files.get("mp4_" + q)
-        if url:
-            return {"type": "mp4", "url": url, "headers": {}, "method": "api:files.mp4_" + q}
-    return None
+        if isinstance(url, str) and url.startswith("http"):
+            out.append({"type": "mp4", "url": url, "headers": {}, "method": "api:files.mp4_" + q})
+    return out
+
+
+def probe(media):
+    if not config.VERIFY_MEDIA:
+        return None
+    try:
+        with proxy.open_upstream(media["url"], media.get("headers"), timeout=10) as r:
+            r.read(64)
+        return None
+    except urllib.error.HTTPError as e:
+        return "CDN ответил %s" % e.code
+    except (urllib.error.URLError, OSError) as e:
+        return "CDN недоступен: %s" % e
 
 
 def _from_ytdlp_info(info, method):
@@ -277,14 +292,23 @@ def _from_ytdlp_info(info, method):
 def resolve_media(stream):
     errors = []
 
-    got = _from_files(stream.get("files") or {})
-    if got:
-        return got
-    errors.append("в ответе API нет поля files с потоком")
+    def accept(got):
+        err = probe(got)
+        if err:
+            errors.append("%s: %s" % (got["method"], err))
+            return False
+        return True
+
+    candidates = _from_files(stream.get("files") or {})
+    if not candidates:
+        errors.append("в ответе API нет поля files с потоком")
+    for got in candidates:
+        if accept(got):
+            return got
 
     if stream.get("_ytdlp"):
         got = _from_ytdlp_info(stream["_ytdlp"], "yt-dlp:page")
-        if got:
+        if got and accept(got):
             return got
 
     targets = []
@@ -294,9 +318,10 @@ def resolve_media(stream):
     for method, url in targets:
         try:
             got = _from_ytdlp_info(ytdlp_json(url), method)
-            if got:
+            if not got:
+                errors.append("%s: yt-dlp не нашёл форматов" % method)
+            elif accept(got):
                 return got
-            errors.append("%s: yt-dlp не нашёл форматов" % method)
         except MediaError as e:
             errors.append("%s: %s" % (method, e))
     if not config.cookies_path():

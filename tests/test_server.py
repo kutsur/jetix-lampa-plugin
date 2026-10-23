@@ -49,6 +49,8 @@ class FakeCDN(BaseHTTPRequestHandler):
             ctype = "application/x-mpegURL"
         elif self.path.startswith("/live/720/seg5.ts"):
             body, ctype = SEGMENT, "video/mp2t"
+        elif self.path == "/rec.mp4":
+            body, ctype = b"mp4data", "video/mp4"
         elif self.path == "/expired.m3u8":
             self.send_response(403)
             self.send_header("Content-Length", "0")
@@ -166,10 +168,12 @@ class TestSelection(unittest.TestCase):
         self.assertIsNone(vk.pick([]))
 
     def test_files_preferred(self):
-        m = vk._from_files({"mp4_720": "http://x/720.mp4", "hls_live": "http://x/live.m3u8"})
-        self.assertEqual((m["type"], m["url"]), ("hls", "http://x/live.m3u8"))
+        m = vk._from_files({"mp4_720": "http://x/720.mp4", "hls_live_playback": "http://x/p.m3u8",
+                            "hls": "http://x/h.m3u8", "hls_live": "http://x/live.m3u8", "failover_host": "x"})
+        self.assertEqual([c["url"] for c in m],
+                         ["http://x/live.m3u8", "http://x/h.m3u8", "http://x/p.m3u8", "http://x/720.mp4"])
         m = vk._from_files({"mp4_480": "http://x/480.mp4", "mp4_1080": "http://x/1080.mp4"})
-        self.assertEqual((m["type"], m["url"]), ("mp4", "http://x/1080.mp4"))
+        self.assertEqual(m[0]["url"], "http://x/1080.mp4")
 
 
 class TestRewrite(unittest.TestCase):
@@ -291,10 +295,20 @@ class TestServer(Base):
         self.assertIn(self.cdn_url + "/live/720/seg5.ts?sig=abc", variant)
         self.assertIn("https://other.cdn/seg6.ts", variant)
 
-    def test_upstream_expired(self):
+    def test_api_link_forbidden_falls_back_to_ytdlp(self):
         config.PROXY_MODE = "full"
         self.videos = [self.live_video(files={"hls": self.cdn_url + "/expired.m3u8"})]
-        self.assertEqual(get(self.base + "/live.m3u8")[0], 502)
+        self.ytdlp_result = self.ytdlp_hls(self.cdn_url + "/live/master.m3u8")
+        self.assertEqual(get(self.base + "/live.m3u8")[0], 200)
+        self.assertEqual(len(self.ytdlp_calls), 1)
+
+    def test_all_links_forbidden(self):
+        self.videos = [self.live_video(files={"hls": self.cdn_url + "/expired.m3u8"})]
+        data = json.loads(get(self.base + "/live.json")[2])
+        self.assertFalse(data["playable"])
+        self.assertIn("api:files.hls: CDN ответил 403", data["error"])
+        code, _, body = get(self.base + "/live.m3u8")
+        self.assertEqual(code, 404)
 
     def test_playlist(self):
         code, _, body = get(self.base + "/playlist.m3u")
