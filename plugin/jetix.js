@@ -10,9 +10,13 @@
     var POLL_MS = 5 * 60 * 1000;
 
     var ICON =
-        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
-        '<rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="2"/>' +
-        '<path d="M10 9.2v5.6c0 .4.4.6.7.4l4.4-2.8c.3-.2.3-.6 0-.8l-4.4-2.8c-.3-.2-.7 0-.7.4z" fill="currentColor"/>' +
+        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">' +
+        '<path d="M4 3.5L8.9 6.83A6.2 6.2 0 0 0 6 10.6Z"/>' +
+        '<path d="M20 3.5L15.1 6.83A6.2 6.2 0 0 1 18 10.6Z"/>' +
+        '<path d="M1.5 20.5L6.63 15.3A6.2 6.2 0 0 0 9.88 18.03L9 20.5Z"/>' +
+        '<path d="M22.5 20.5L17.37 15.3A6.2 6.2 0 0 1 14.12 18.03L15 20.5Z"/>' +
+        '<path fill-rule="evenodd" d="M7 12.2a5 5 0 1 0 10 0a5 5 0 1 0-10 0ZM8.2 10.9a1.4 1.1 0 1 0 2.8 0a1.4 1.1 0 1 0-2.8 0Z"/>' +
+        '<circle cx="10" cy="11.1" r=".55"/>' +
         '<circle class="jetix-dot" cx="19" cy="5" r="3" fill="#e53935" style="display:none"/>' +
         '</svg>';
 
